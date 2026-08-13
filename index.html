@@ -64,8 +64,8 @@
         <input id="inputDate" type="date" class="w-full border rounded px-3 py-2"/>
       </div>
       <div class="mb-4">
-        <label class="block mb-1 font-medium" data-i18n="labelTime">练习时间</label>
-        <input id="inputTime" type="time" class="w-full border rounded px-3 py-2"/>
+        <label class="block mb-1 font-medium" data-i18n="labelDuration">练习时长(min)</label>
+        <input id="inputDuration" type="number" min="1" class="w-full border rounded px-3 py-2"/>
       </div>
       <div class="mb-4">
         <label class="block mb-1 font-medium" data-i18n="labelSeries">练习序列</label>
@@ -147,7 +147,7 @@ const i18nData = {
     tabStats:"统计日历",
     tabNotes:"随笔总结",
     labelDate:"打卡日期",
-    labelTime:"练习时间",
+    labelDuration:"练习时长(min)",
     labelSeries:"练习序列",
     series1:"一序列",
     series2:"二序列",
@@ -174,7 +174,7 @@ const i18nData = {
     typePracticeTitle:"练习感悟",
     typeOtherTitle:"其他",
     seriesName:"练习序列",
-    time:"练习时间",
+    duration:"时长(min)",
     note:"随笔",
     confirmDel:"确定删除这条记录？",
     savedOk:"保存成功！"
@@ -185,7 +185,7 @@ const i18nData = {
     tabStats:"Calendar Stats",
     tabNotes:"Notes Summary",
     labelDate:"Log Date",
-    labelTime:"Practice Time",
+    labelDuration:"Duration(min)",
     labelSeries:"Practice Series",
     series1:"Primary Series",
     series2:"Intermediate Series",
@@ -212,7 +212,7 @@ const i18nData = {
     typePracticeTitle:"Practice Reflection",
     typeOtherTitle:"Others",
     seriesName:"Series",
-    time:"Time",
+    duration:"Duration(min)",
     note:"Note",
     confirmDel:"Delete this log?",
     savedOk:"Saved successfully!"
@@ -335,19 +335,21 @@ function applyI18n(){
   if(activePage==="page-notes") renderNotesSummary();
 }
 
-// 初始化表单默认今日
+// 初始化表单默认今日、默认时长100，随笔类型默认练习感悟
 function initForm(){
   const today = new Date();
   const y = today.getFullYear();
   const m = String(today.getMonth()+1).padStart(2,"0");
   const d = String(today.getDate()).padStart(2,"0");
   document.getElementById("inputDate").value = `${y}-${m}-${d}`;
+  document.getElementById("inputDuration").value = 100;
+  document.getElementById("inputNoteType").value = "practice";
 }
 
 // 保存打卡记录
 document.getElementById("btnSaveLog").onclick = function(){
   const date = document.getElementById("inputDate").value;
-  const time = document.getElementById("inputTime").value;
+  const duration = Number(document.getElementById("inputDuration").value) || 0;
   const series = document.getElementById("inputSeries").value;
   const noteType = document.getElementById("inputNoteType").value;
   const essay = document.getElementById("inputEssay").value.trim();
@@ -357,7 +359,7 @@ document.getElementById("btnSaveLog").onclick = function(){
   }
   const record = {
     id: Date.now(),
-    date, time, series, noteType, essay
+    date, duration, series, noteType, essay
   };
   logs.push(record);
   saveLogs();
@@ -445,7 +447,10 @@ function renderCalendar(){
     html += `<div class="calendar-day border rounded p-1 cursor-pointer ${bgClass}" data-date="${ds}">
       <div class="font-bold">${d}</div>`;
     if(dayLogs.length>0){
-      html += `<div class="text-xs">${dayLogs.length}📝</div>`;
+      dayLogs.forEach(log=>{
+        const seriesText = log.series==="primary"?dict.series1:dict.series2;
+        html += `<div class="text-xs leading-tight">${seriesText} ${log.duration}min</div>`;
+      })
     }
     html += `</div>`;
   }
@@ -479,8 +484,7 @@ function renderModal(dateStr, dayLogs){
   dayLogs.forEach(log=>{
     h += `<div class="border-b py-2">
       <div><b>${dict.seriesName}:</b> ${log.series==="primary"?dict.series1:dict.series2}</div>
-      <div><b>${dict.time}:</b> ${log.time||"--"}</div>
-      <div><b>${dict.note}:</b> ${log.essay||""}</div>
+      <div><b>${dict.duration}:</b> ${log.duration} min</div>
       <button class="del‑log mt-2 px-2 py-1 bg-red-400 text-white rounded text-xs" data-id="${log.id}">${dict.delete}</button>
     </div>`;
   });
@@ -544,7 +548,7 @@ function renderNotesSummary(){
     g.list.forEach(item=>{
       const seriesText = item.series==="primary"?dict.series1:dict.series2;
       html += `<div class="mb-3 pb-2 border-b">
-        <div class="text-sm text-gray‑500">${item.date} · ${seriesText}</div>
+        <div class="text-sm text-gray‑500">${item.date} · ${seriesText} · ${item.duration}min</div>
         <div class="mt-1 whitespace-pre-wrap">${escapeHtml(item.essay)}</div>
       </div>`;
     });
